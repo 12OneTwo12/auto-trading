@@ -37,3 +37,4 @@ out/
 .vscode/
 
 src/main/resources/config/properties/binance-properties.yml
+src/main/resources/config/properties/slack-properties.yml
