@@ -142,7 +142,7 @@ public class SenderUtils {
      * @param <T>
      * @return
      */
-    public <T> T sendGet(HttpMethod method, String uri,  T responseClass) {
+    public <T> T sendGet(HttpMethod method, String uri, T responseClass) {
         WebClient client = webClientBuilder.build();
         return retrieveGet(client, method, uri, makeHeader(getHeader()), responseClass);
     }
@@ -160,6 +160,8 @@ public class SenderUtils {
      */
     private <T> T retrieveGet(WebClient client, HttpMethod method, String uri, Consumer<HttpHeaders> headers, T responseClass) {
 
+        System.out.println("url : " + uri);
+
         try {
             WebClient.RequestHeadersSpec<?> request = client.method(method)
                     .uri(uri)
@@ -174,6 +176,8 @@ public class SenderUtils {
                     response.bodyToMono(String.class)
             );
             String json = jsonMono.block();
+
+            System.out.println("return json : "+json);
 
             T responseModel = (T) objectMapper.readValue(json, responseClass.getClass());
 

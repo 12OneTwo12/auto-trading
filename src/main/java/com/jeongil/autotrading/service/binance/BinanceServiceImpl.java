@@ -35,21 +35,23 @@ public class BinanceServiceImpl implements BinanceService{
 
         String timeStamp = Long.toString(System.currentTimeMillis());
 
-        String queryString = "?timestamp=" + timeStamp;
+        String queryString = "timestamp=" + timeStamp;
 
         String signature = getSignature(queryString);
 
         queryString += "&signature=" + signature;
 
-        String url = binanceProperties.getDefaultUrl() + binanceProperties.getGetAccountInfoUrl() + queryString;
+        String url = binanceProperties.getDefaultUrl() + binanceProperties.getGetAccountInfoUrl() + "?" + queryString;
 
         logger.info("before send get");
 
-        JSONObject jsonObject = senderUtils.sendGet(HttpMethod.GET,url, new JSONObject());
+        AccountInfoDto jsonObject = senderUtils.sendGet(HttpMethod.GET,url, new AccountInfoDto());
 
         logger.info("after send get");
 
         logger.info("account request"+jsonObject.toString());
+
+        System.out.println("account request"+jsonObject.toString());
 
         return null;
     }
