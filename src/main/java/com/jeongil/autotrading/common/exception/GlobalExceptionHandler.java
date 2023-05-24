@@ -30,4 +30,10 @@ public class GlobalExceptionHandler {
         logger.error("sendMessageException", e);
         senderUtils.sendSlack("sendMessageException : " + e.getMessage() + "| 실행 시각 : " + LocalDateTime.now().toString());
     }
+
+    @ExceptionHandler(EncryptException.class)
+    public void encryptException(EncryptException e) {
+        logger.error("encryptException", e);
+        senderUtils.sendSlack("encryptException : " + e.getMessage() + "| 실행 시각 : " + LocalDateTime.now().toString());
+    }
 }

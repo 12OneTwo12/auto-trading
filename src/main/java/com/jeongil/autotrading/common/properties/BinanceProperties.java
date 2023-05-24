@@ -14,6 +14,11 @@ import org.springframework.stereotype.Component;
 @Data
 public class BinanceProperties {
 
-    private String key;
+    private String accessKey;
+    private String secretKey;
     private String defaultUrl;
+    private String getAccountInfoUrl;
+    private String takerLongShotRatioUrl;
+    private String buyUrl;
+    private String sellUrl;
 }
