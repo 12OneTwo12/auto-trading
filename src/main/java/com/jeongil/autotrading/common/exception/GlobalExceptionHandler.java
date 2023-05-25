@@ -36,4 +36,10 @@ public class GlobalExceptionHandler {
         logger.error("encryptException", e);
         senderUtils.sendSlack("encryptException : " + e.getMessage() + "| 실행 시각 : " + LocalDateTime.now().toString());
     }
+
+    @ExceptionHandler(RequestOrderException.class)
+    public void requestOrderException(RequestOrderException e){
+        logger.error("requestOrderException", e);
+        senderUtils.sendSlack("requestOrderException : " + e.getMessage() + "| 실행 시각 : " + LocalDateTime.now().toString());
+    }
 }

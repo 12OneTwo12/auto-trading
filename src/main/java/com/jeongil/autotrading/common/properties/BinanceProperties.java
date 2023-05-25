@@ -19,6 +19,7 @@ public class BinanceProperties {
     private String defaultUrl;
     private String getAccountInfoUrl;
     private String takerLongShotRatioUrl;
-    private String buyUrl;
-    private String sellUrl;
+    private String orderUrl;
+    private String userTradesUrl;
+    private String symbol;
 }

@@ -1,6 +1,7 @@
 package com.jeongil.autotrading.service.binance;
 
 import com.jeongil.autotrading.common.exception.EncryptException;
+import com.jeongil.autotrading.common.exception.RequestOrderException;
 import com.jeongil.autotrading.common.properties.BinanceProperties;
 import com.jeongil.autotrading.dto.*;
 import com.jeongil.autotrading.utils.SenderUtils;
@@ -27,8 +28,6 @@ public class BinanceServiceImpl implements BinanceService{
     @Autowired
     private SenderUtils senderUtils;
 
-    private String symbol = "BTSUSDT";
-
     @Override
     public AccountInfoDto getMyAccountPosition() {
         String timeStamp = Long.toString(System.currentTimeMillis());
@@ -45,16 +44,15 @@ public class BinanceServiceImpl implements BinanceService{
 
         boolean hasPosition = false;
         double percentageDifference = 0;
+        double myPositionPrice = 0;
 
         for (Position position : accountDetailInfoDto.getPositions()) {
-            if (position.getSymbol().equals(symbol) && position.getEntryPrice() > 0)  {
+            if (position.getSymbol().equals(binanceProperties.getSymbol()) && position.getEntryPrice() > 0)  {
                 hasPosition = true;
 
-                double difference = position.getMarkPrice() - position.getEntryPrice();
+                if (position.getUnrealizedProfit() == 0) continue;
 
-                if (difference == 0) continue;
-
-                percentageDifference = (difference / position.getEntryPrice()) * 100;
+                percentageDifference = (position.getUnrealizedProfit() / position.getMarkPrice()) * 100;
             }
         }
 
@@ -64,22 +62,72 @@ public class BinanceServiceImpl implements BinanceService{
             if ("BTC".equals(asset.getAsset())) availableBalance = asset.getAvailableBalance();
         }
 
-        return new AccountInfoDto(hasPosition, percentageDifference, availableBalance);
+        return new AccountInfoDto(hasPosition, percentageDifference, availableBalance, myPositionPrice);
     }
 
     @Override
-    public void sellIt() {
+    public void sellIt(AccountInfoDto accountInfoDto) {
+        String side = "SELL";
+        String type = "MARKET";
+        String timeStamp = Long.toString(System.currentTimeMillis());
 
+        OrderRequestDto orderRequestDto = new OrderRequestDto(binanceProperties.getSymbol(), side, null, type, timeStamp , null);
+
+        String queryString = "side=" + side;
+        queryString += "&type=" + type;
+        queryString += "&timestamp=" + timeStamp;
+
+        String sig = getSignature(queryString);
+        sig = "signature=" + sig;
+
+        String uri = binanceProperties.getDefaultUrl() + binanceProperties.getOrderUrl() + "?" + sig;
+
+        OrderResponseDto responseDto = senderUtils.send(HttpMethod.POST, uri, orderRequestDto, new OrderResponseDto());
+
+        if (!"NEW".equals(responseDto.getStatus())) throw RequestOrderException.ofError("Order Response가 비정상적입니다.");
+
+        TradeHistory tradeHistory = getLastTradeHistory();
+
+        String message = "[ Future Sell completed - " + "실현 금액 : " + tradeHistory.getRealizedPnl() + " position side : " + tradeHistory.getPositionSide() + " ]";
+
+        senderUtils.sendSlack(message);
     }
 
     @Override
-    public void buyIt(LongOrShot longOrShot) {
+    public void buyIt(LongOrShot longOrShot, AccountInfoDto accountInfoDto) {
+        String side = "BUY";
+        String type = "MARKET";
+        String positionSide = longOrShot.isLong() ? "LONG" : "SHORT";
+        Double price = accountInfoDto.getAvailableBalance();
+        String timeStamp = Long.toString(System.currentTimeMillis());
 
+        OrderRequestDto orderRequestDto = new OrderRequestDto(binanceProperties.getSymbol(), side, positionSide,type, timeStamp ,price);
+
+        String queryString = "side=" + side;
+        queryString += "&type=" + type;
+        queryString += "&positionSide=" + positionSide;
+        queryString += "&timestamp=" + timeStamp;
+        queryString += "&price" + price;
+
+        String sig = getSignature(queryString);
+        sig = "signature=" + sig;
+
+        String uri = binanceProperties.getDefaultUrl() + binanceProperties.getOrderUrl() + "?" + sig;
+
+        OrderResponseDto responseDto = senderUtils.send(HttpMethod.POST, uri, orderRequestDto, new OrderResponseDto());
+
+        if (!"NEW".equals(responseDto.getStatus())) throw RequestOrderException.ofError("Order Response가 비정상적입니다.");
+
+        TradeHistory tradeHistory = getLastTradeHistory();
+
+        String message = "[ Future Buy completed - " + "position side : " + tradeHistory.getPositionSide() + " price : " + tradeHistory.getPrice() + " ]";
+
+        senderUtils.sendSlack(message);
     }
 
     @Override
     public List<BuySellVolume> getBuySellVolume() {
-        String queryString = "symbol=" + symbol;
+        String queryString = "symbol=" + binanceProperties.getSymbol();
         queryString += "&period=" + "5m";
         queryString += "&limit=" + "3";
 
@@ -114,5 +162,25 @@ public class BinanceServiceImpl implements BinanceService{
         } catch (Exception e){
             throw new EncryptException("sha256 도중 문제 발생");
         }
+    }
+
+    private TradeHistory getLastTradeHistory() {
+        String timeStamp = Long.toString(System.currentTimeMillis());
+
+        String queryString = "timestamp=" + timeStamp;
+
+        queryString += "&limit=" + 1;
+
+        String signature = getSignature(queryString);
+
+        queryString += "&signature=" + signature;
+
+        String url = binanceProperties.getDefaultUrl() + binanceProperties.getGetAccountInfoUrl() + "?" + queryString;
+
+        List<TradeHistory> tradeHistories = new ArrayList<>();
+
+        List<TradeHistory> tradeHistory = senderUtils.sendGet(HttpMethod.GET, url, tradeHistories);
+
+        return tradeHistory.get(0);
     }
 }

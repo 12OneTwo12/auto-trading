@@ -7,9 +7,9 @@ import com.jeongil.autotrading.dto.LongOrShot;
 import java.util.List;
 
 public interface BinanceService {
-    void sellIt();
+    void sellIt(AccountInfoDto accountInfoDto);
 
-    void buyIt(LongOrShot longOrShot);
+    void buyIt(LongOrShot longOrShot, AccountInfoDto accountInfoDto);
 
     List<BuySellVolume> getBuySellVolume();
 
