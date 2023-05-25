@@ -274,6 +274,16 @@ public class SenderUtils {
     }
 
     public String getErrorMessage(String jobName, String message){
-        return jobName + " : " + message + "| 실행 시각 : " + LocalDateTime.now().toString();
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+
+        String methodName = "";
+
+        if (stackTrace.length >= 3) {
+            StackTraceElement callingMethod = stackTrace[2];
+            methodName = callingMethod.getMethodName();
+        }
+
+        return jobName + " : " + message + " | 실행 시각 : " + LocalDateTime.now().toString() + "/n"
+                + "method name : " + methodName;
     }
 }
