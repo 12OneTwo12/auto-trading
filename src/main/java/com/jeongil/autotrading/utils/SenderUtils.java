@@ -19,8 +19,8 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.function.Consumer;
 
 @Component
@@ -60,6 +60,7 @@ public class SenderUtils {
             connection.getResponseCode();
             connection.disconnect();
         } catch (IOException e) {
+            sendSlack(getErrorMessage("SendMessageException","slack.SendException"));
             throw SendMessageException.ofError("slack.SendException");
         }
     }
@@ -106,6 +107,8 @@ public class SenderUtils {
      */
     private <T> T retrieve(WebClient client, HttpMethod method, String uri, Object jsonData, Consumer<HttpHeaders> headers, T responseClass) {
 
+        System.out.println("url : " + uri);
+
         try {
             WebClient.RequestHeadersSpec<?> request = client.method(method)
                     .uri(uri)
@@ -122,6 +125,8 @@ public class SenderUtils {
             );
             String json = jsonMono.block();
 
+            System.out.println("return json : "+json);
+
             T responseModel = (T) objectMapper.readValue(json, responseClass.getClass());
 
             logger.debug("response = {}", responseModel.toString());
@@ -129,7 +134,8 @@ public class SenderUtils {
             return responseModel;
         }  catch (Exception e) {
             logger.error("e", e);
-            throw new SendMessageException("webclient.SendException");
+            sendSlack(getErrorMessage("SendMessageException","webclient.SendException"));
+            throw SendMessageException.ofError("webclient.SendException");
         }
     }
 
@@ -186,7 +192,66 @@ public class SenderUtils {
             return responseModel;
         }  catch (Exception e) {
             logger.error("e", e);
-            throw new SendMessageException("webclient.SendException");
+            sendSlack(getErrorMessage("SendMessageException","webclient.SendException"));
+            throw SendMessageException.ofError("webclient.SendException");
+        }
+    }
+
+    /**
+     * 내부 서버 통신
+     *
+     * @param method
+     * @param uri
+     * @param responseClass
+     * @param <T>
+     * @return
+     */
+    public <T> List<T> sendList(HttpMethod method, String uri, T responseClass) {
+        WebClient client = webClientBuilder.build();
+        return retrieveList(client, method, uri, makeHeader(getHeader()), responseClass);
+    }
+
+    /**
+     * 통신
+     *
+     * @param client
+     * @param method
+     * @param uri
+     * @param headers
+     * @param responseClass
+     * @param <T>
+     * @return
+     */
+    private <T> List<T> retrieveList(WebClient client, HttpMethod method, String uri, Consumer<HttpHeaders> headers, T responseClass) {
+
+        System.out.println("url : " + uri);
+
+        try {
+            WebClient.RequestHeadersSpec<?> request = client.method(method)
+                    .uri(uri)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .accept(MediaType.APPLICATION_JSON);
+
+            if (headers != null) {
+                request.headers(headers);
+            }
+
+            Mono<String> jsonMono = request.exchangeToMono(response ->
+                    response.bodyToMono(String.class)
+            );
+            String json = jsonMono.block();
+
+            System.out.println("return json : "+json);
+
+            T[] responseModel = (T[]) objectMapper.readValue(json, responseClass.getClass());
+
+            logger.debug("response = {}", responseModel.toString());
+
+            return Arrays.asList(responseModel);
+        }  catch (Exception e) {
+            logger.error("e", e);
+            sendSlack(getErrorMessage("SendMessageException","webclient.SendException"));
+            throw SendMessageException.ofError("webclient.SendException");
         }
     }
 
@@ -206,5 +271,9 @@ public class SenderUtils {
             }
         };
         return headers;
+    }
+
+    public String getErrorMessage(String jobName, String message){
+        return jobName + " : " + message + "| 실행 시각 : " + LocalDateTime.now().toString();
     }
 }

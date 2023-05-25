@@ -61,7 +61,7 @@ public class BinanceServiceImpl implements BinanceService{
         for (Asset asset : accountDetailInfoDto.getAssets()){
             if ("BTC".equals(asset.getAsset())) availableBalance = asset.getAvailableBalance();
         }
-
+        
         return new AccountInfoDto(hasPosition, percentageDifference, availableBalance, myPositionPrice);
     }
 
@@ -84,11 +84,17 @@ public class BinanceServiceImpl implements BinanceService{
 
         OrderResponseDto responseDto = senderUtils.send(HttpMethod.POST, uri, orderRequestDto, new OrderResponseDto());
 
-        if (!"NEW".equals(responseDto.getStatus())) throw RequestOrderException.ofError("Order Response가 비정상적입니다.");
+        if (!"NEW".equals(responseDto.getStatus())) {
+            senderUtils.sendSlack(senderUtils.getErrorMessage("RequestOrderException", "Order Response가 비정상적입니다."));
+            throw RequestOrderException.ofError("Order Response가 비정상적입니다.");
+        }
 
         TradeHistory tradeHistory = getLastTradeHistory();
 
-        String message = "[ Future Sell completed - " + "실현 금액 : " + tradeHistory.getRealizedPnl() + " position side : " + tradeHistory.getPositionSide() + " ]";
+        String winOrLose = accountInfoDto.getRate() > 0 ? "이익" : "손해";
+        winOrLose += " - ";
+
+        String message = winOrLose + " [ Future Sell completed - " + " 실현 금액 : " + tradeHistory.getRealizedPnl() + " position side : " + tradeHistory.getPositionSide() + " 수익률 : " + accountInfoDto.getRate() + " ]";
 
         senderUtils.sendSlack(message);
     }
@@ -116,7 +122,10 @@ public class BinanceServiceImpl implements BinanceService{
 
         OrderResponseDto responseDto = senderUtils.send(HttpMethod.POST, uri, orderRequestDto, new OrderResponseDto());
 
-        if (!"NEW".equals(responseDto.getStatus())) throw RequestOrderException.ofError("Order Response가 비정상적입니다.");
+        if (!"NEW".equals(responseDto.getStatus())) {
+            senderUtils.sendSlack(senderUtils.getErrorMessage("RequestOrderException", "Order Response가 비정상적입니다."));
+            throw RequestOrderException.ofError("Order Response가 비정상적입니다.");
+        }
 
         TradeHistory tradeHistory = getLastTradeHistory();
 
@@ -133,9 +142,7 @@ public class BinanceServiceImpl implements BinanceService{
 
         String url = binanceProperties.getDefaultUrl() + binanceProperties.getTakerLongShotRatioUrl() + "?" + queryString;
 
-        List<BuySellVolume> buySellVolumeEx = new ArrayList<>();
-
-        List<BuySellVolume> buySellVolumes = senderUtils.sendGet(HttpMethod.GET, url, buySellVolumeEx);
+        List<BuySellVolume> buySellVolumes = senderUtils.sendList(HttpMethod.GET, url, new BuySellVolume());
 
         return buySellVolumes;
     }
@@ -160,6 +167,7 @@ public class BinanceServiceImpl implements BinanceService{
             //4. Hex Encode to String
             return Hex.encodeHexString(hash);
         } catch (Exception e){
+            senderUtils.sendSlack(senderUtils.getErrorMessage("EncryptException","sha256 도중 문제 발생"));
             throw new EncryptException("sha256 도중 문제 발생");
         }
     }
