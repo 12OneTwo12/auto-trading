@@ -12,8 +12,8 @@ import lombok.Setter;
 @AllArgsConstructor
 public class BuySellVolume {
 
-    private Double buySellRatio;
-    private Double buyVol;
-    private Double sellVol;
-    private String timestamp;
+    private String buySellRatio;
+    private String buyVol;
+    private String sellVol;
+    private Long timestamp;
 }

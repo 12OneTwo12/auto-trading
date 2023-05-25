@@ -78,11 +78,11 @@ public class BinanceServiceImpl implements BinanceService{
         queryString += "&timestamp=" + timeStamp;
 
         String sig = getSignature(queryString);
-        sig = "signature=" + sig;
+        queryString += "&signature=" + sig;
 
-        String uri = binanceProperties.getDefaultUrl() + binanceProperties.getOrderUrl() + "?" + sig;
+        String uri = binanceProperties.getDefaultUrl() + binanceProperties.getOrderUrl() + "?" + queryString;
 
-        OrderResponseDto responseDto = senderUtils.send(HttpMethod.POST, uri, orderRequestDto, new OrderResponseDto());
+        OrderResponseDto responseDto = senderUtils.sendGet(HttpMethod.POST, uri, new OrderResponseDto());
 
         if (!"NEW".equals(responseDto.getStatus())) {
             senderUtils.sendSlack(senderUtils.getErrorMessage("RequestOrderException", "Order Response가 비정상적입니다."));
@@ -112,15 +112,15 @@ public class BinanceServiceImpl implements BinanceService{
         String queryString = "side=" + side;
         queryString += "&type=" + type;
         queryString += "&positionSide=" + positionSide;
+        queryString += "&price" + price.toString();
         queryString += "&timestamp=" + timeStamp;
-        queryString += "&price" + price;
 
         String sig = getSignature(queryString);
-        sig = "signature=" + sig;
+        queryString += "&signature=" + sig;
 
-        String uri = binanceProperties.getDefaultUrl() + binanceProperties.getOrderUrl() + "?" + sig;
+        String uri = binanceProperties.getDefaultUrl() + binanceProperties.getOrderUrl() + "?" + queryString;
 
-        OrderResponseDto responseDto = senderUtils.send(HttpMethod.POST, uri, orderRequestDto, new OrderResponseDto());
+        OrderResponseDto responseDto = senderUtils.sendGet(HttpMethod.POST, uri, new OrderResponseDto());
 
         if (!"NEW".equals(responseDto.getStatus())) {
             senderUtils.sendSlack(senderUtils.getErrorMessage("RequestOrderException", "Order Response가 비정상적입니다."));

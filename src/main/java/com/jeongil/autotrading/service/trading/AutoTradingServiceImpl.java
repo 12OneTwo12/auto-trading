@@ -38,6 +38,8 @@ public class AutoTradingServiceImpl implements AutoTradingService {
         } else {
             LongOrShot longOrShot = longOrShotAndTheseINeedToBuy();
 
+            binanceService.buyIt(longOrShot, accountInfoDto);
+
             if (longOrShot.isNeedToBuy() && accountInfoDto.getAvailableBalance() > 0) binanceService.buyIt(longOrShot, accountInfoDto);
         }
     }
@@ -58,8 +60,8 @@ public class AutoTradingServiceImpl implements AutoTradingService {
         Double totalSellVolume = 0D;
 
         for (BuySellVolume buySellVolume : buySellVolumes) {
-            totalBuyVolume += buySellVolume.getBuyVol();
-            totalSellVolume += buySellVolume.getSellVol();
+            totalBuyVolume += Double.valueOf(buySellVolume.getBuyVol());
+            totalSellVolume += Double.valueOf(buySellVolume.getSellVol());
         }
 
         Double avgBuyVolume = 0D;

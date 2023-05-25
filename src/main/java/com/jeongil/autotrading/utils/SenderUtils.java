@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeongil.autotrading.common.exception.SendMessageException;
 import com.jeongil.autotrading.common.properties.BinanceProperties;
 import com.jeongil.autotrading.common.properties.SlackProperties;
+import org.codehaus.jettison.json.JSONArray;
+import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -243,11 +246,16 @@ public class SenderUtils {
 
             System.out.println("return json : "+json);
 
-            T[] responseModel = (T[]) objectMapper.readValue(json, responseClass.getClass());
+            List<T> responses = new ArrayList<>();
 
-            logger.debug("response = {}", responseModel.toString());
+            JSONArray jsonArray = new JSONArray(json);
+            for (int i = 0; i < jsonArray.length(); i++) {
+                JSONObject jsonObject = jsonArray.getJSONObject(i);
+                T response = (T) parseJsonObjectToObject(jsonObject, responseClass.getClass());
+                responses.add(response);
+            }
 
-            return Arrays.asList(responseModel);
+            return responses;
         }  catch (Exception e) {
             logger.error("e", e);
             sendSlack(getErrorMessage("SendMessageException","webclient.SendException"));
@@ -276,14 +284,28 @@ public class SenderUtils {
     public String getErrorMessage(String jobName, String message){
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
 
-        String methodName = "";
+        String methodName = "i don't know";
 
         if (stackTrace.length >= 3) {
             StackTraceElement callingMethod = stackTrace[2];
             methodName = callingMethod.getMethodName();
         }
 
-        return jobName + " : " + message + " | 실행 시각 : " + LocalDateTime.now().toString() + "/n"
+        return jobName + " : " + message + " | 실행 시각 : " + LocalDateTime.now().toString() + " /n "
                 + "method name : " + methodName;
+    }
+
+    private <T> T parseJsonObjectToObject(JSONObject jsonObject, Class<T> clazz) throws Exception {
+        T object = clazz.getDeclaredConstructor().newInstance();
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
+            field.setAccessible(true);
+            String fieldName = field.getName();
+            if (jsonObject.has(fieldName)) {
+                Object value = jsonObject.get(fieldName);
+                field.set(object, value);
+            }
+        }
+        return object;
     }
 }
