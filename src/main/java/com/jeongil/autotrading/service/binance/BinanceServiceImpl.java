@@ -2,12 +2,9 @@ package com.jeongil.autotrading.service.binance;
 
 import com.jeongil.autotrading.common.exception.EncryptException;
 import com.jeongil.autotrading.common.properties.BinanceProperties;
-import com.jeongil.autotrading.dto.AccountInfoDto;
-import com.jeongil.autotrading.dto.BuySellVolume;
-import com.jeongil.autotrading.dto.LongOrShot;
+import com.jeongil.autotrading.dto.*;
 import com.jeongil.autotrading.utils.SenderUtils;
 import org.apache.commons.codec.binary.Hex;
-import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -29,10 +27,10 @@ public class BinanceServiceImpl implements BinanceService{
     @Autowired
     private SenderUtils senderUtils;
 
+    private String symbol = "BTSUSDT";
+
     @Override
     public AccountInfoDto getMyAccountPosition() {
-        logger.info("account request start");
-
         String timeStamp = Long.toString(System.currentTimeMillis());
 
         String queryString = "timestamp=" + timeStamp;
@@ -43,17 +41,30 @@ public class BinanceServiceImpl implements BinanceService{
 
         String url = binanceProperties.getDefaultUrl() + binanceProperties.getGetAccountInfoUrl() + "?" + queryString;
 
-        logger.info("before send get");
+        AccountDetailInfoDto accountDetailInfoDto = senderUtils.sendGet(HttpMethod.GET, url, new AccountDetailInfoDto());
 
-        AccountInfoDto jsonObject = senderUtils.sendGet(HttpMethod.GET,url, new AccountInfoDto());
+        boolean hasPosition = false;
+        double percentageDifference = 0;
 
-        logger.info("after send get");
+        for (Position position : accountDetailInfoDto.getPositions()) {
+            if (position.getSymbol().equals(symbol) && position.getEntryPrice() > 0)  {
+                hasPosition = true;
 
-        logger.info("account request"+jsonObject.toString());
+                double difference = position.getMarkPrice() - position.getEntryPrice();
 
-        System.out.println("account request"+jsonObject.toString());
+                if (difference == 0) continue;
 
-        return null;
+                percentageDifference = (difference / position.getEntryPrice()) * 100;
+            }
+        }
+
+        double availableBalance = 0;
+
+        for (Asset asset : accountDetailInfoDto.getAssets()){
+            if ("BTC".equals(asset.getAsset())) availableBalance = asset.getAvailableBalance();
+        }
+
+        return new AccountInfoDto(hasPosition, percentageDifference, availableBalance);
     }
 
     @Override
@@ -68,7 +79,17 @@ public class BinanceServiceImpl implements BinanceService{
 
     @Override
     public List<BuySellVolume> getBuySellVolume() {
-        return null;
+        String queryString = "symbol=" + symbol;
+        queryString += "&period=" + "5m";
+        queryString += "&limit=" + "3";
+
+        String url = binanceProperties.getDefaultUrl() + binanceProperties.getTakerLongShotRatioUrl() + "?" + queryString;
+
+        List<BuySellVolume> buySellVolumeEx = new ArrayList<>();
+
+        List<BuySellVolume> buySellVolumes = senderUtils.sendGet(HttpMethod.GET, url, buySellVolumeEx);
+
+        return buySellVolumes;
     }
 
     @Override

@@ -29,17 +29,15 @@ public class AutoTradingServiceImpl implements AutoTradingService {
 
     @Override
     public void process(){
-        binanceService.getMyAccountPosition();
+        AccountInfoDto accountInfoDto = binanceService.getMyAccountPosition();
 
-//        AccountInfoDto accountInfoDto = binanceService.getMyAccountPosition();
+        if (accountInfoDto.isHasPosition()){
+            if (isNeedToSell(accountInfoDto)) binanceService.sellIt();
+        } else {
+            LongOrShot longOrShot = longOrShotAndTheseINeedToBuy();
 
-//        if (accountInfoDto.isHasPosition()){
-//            if (isNeedToSell(accountInfoDto)) binanceService.sellIt();
-//        } else {
-//            LongOrShot longOrShot = longOrShotAndTheseINeedToBuy();
-//
-//            if (longOrShot.isNeedToBuy()) binanceService.buyIt(longOrShot);
-//        }
+            if (longOrShot.isNeedToBuy()) binanceService.buyIt(longOrShot);
+        }
     }
 
     private boolean isNeedToSell(AccountInfoDto accountInfoDto) {

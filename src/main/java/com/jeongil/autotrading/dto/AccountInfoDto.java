@@ -11,5 +11,5 @@ public class AccountInfoDto {
 
     private boolean hasPosition;
     private Double rate;
-    private Double totalWalletBalance;
+    private Double availableBalance;
 }
