@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,26 +44,29 @@ public class BinanceServiceImpl implements BinanceService{
         AccountDetailInfoDto accountDetailInfoDto = senderUtils.sendGet(HttpMethod.GET, url, new AccountDetailInfoDto());
 
         boolean hasPosition = false;
-        double percentageDifference = 0;
-        double myPositionPrice = 0;
+        BigDecimal percentageDifference = BigDecimal.ZERO;
+        BigDecimal myPositionPrice = BigDecimal.ZERO;
+        BigDecimal myPositionQuantity = BigDecimal.ZERO;
 
         for (Position position : accountDetailInfoDto.getPositions()) {
-            if (position.getSymbol().equals(binanceProperties.getSymbol()) && position.getEntryPrice() > 0)  {
+            if (position.getSymbol().equals(binanceProperties.getSymbol()) && position.getEntryPrice().compareTo(BigDecimal.ZERO) > 0)  {
                 hasPosition = true;
 
-                if (position.getUnrealizedProfit() == 0) continue;
+                if (position.getUnrealizedProfit().compareTo(BigDecimal.ZERO) == 0) continue;
 
-                percentageDifference = (position.getUnrealizedProfit() / position.getMarkPrice()) * 100;
+                BigDecimal decimal = position.getUnrealizedProfit().divide(position.getMarkPrice());
+                percentageDifference = decimal.multiply(BigDecimal.valueOf(100));
+                myPositionQuantity = position.getPositionAmt();
             }
         }
 
-        double availableBalance = 0;
+        BigDecimal availableBalance = BigDecimal.ZERO;
 
         for (Asset asset : accountDetailInfoDto.getAssets()){
             if ("BTC".equals(asset.getAsset())) availableBalance = asset.getAvailableBalance();
         }
         
-        return new AccountInfoDto(hasPosition, percentageDifference, availableBalance, myPositionPrice);
+        return new AccountInfoDto(hasPosition, percentageDifference, availableBalance, myPositionPrice, myPositionQuantity);
     }
 
     @Override
@@ -71,10 +75,14 @@ public class BinanceServiceImpl implements BinanceService{
         String type = "MARKET";
         String timeStamp = Long.toString(System.currentTimeMillis());
 
-        OrderRequestDto orderRequestDto = new OrderRequestDto(binanceProperties.getSymbol(), side, null, type, timeStamp , null);
+        String quantity = accountInfoDto.getMyPositionQuantity().toString();
+
+        if (quantity.length() > 5) quantity = quantity.substring(0, 5);
 
         String queryString = "side=" + side;
         queryString += "&type=" + type;
+        queryString += "&quantity=" + quantity;
+        queryString += "&symbol=" + binanceProperties.getSymbol();
         queryString += "&timestamp=" + timeStamp;
 
         String sig = getSignature(queryString);
@@ -91,7 +99,7 @@ public class BinanceServiceImpl implements BinanceService{
 
         TradeHistory tradeHistory = getLastTradeHistory();
 
-        String winOrLose = accountInfoDto.getRate() > 0 ? "이익" : "손해";
+        String winOrLose = accountInfoDto.getRate().compareTo(BigDecimal.ZERO) > 0 ? "이익" : "손해";
         winOrLose += " - ";
 
         String message = winOrLose + " [ Future Sell completed - " + " 실현 금액 : " + tradeHistory.getRealizedPnl() + " position side : " + tradeHistory.getPositionSide() + " 수익률 : " + accountInfoDto.getRate() + " ]";
@@ -104,15 +112,16 @@ public class BinanceServiceImpl implements BinanceService{
         String side = "BUY";
         String type = "MARKET";
         String positionSide = longOrShot.isLong() ? "LONG" : "SHORT";
-        Double price = accountInfoDto.getAvailableBalance();
         String timeStamp = Long.toString(System.currentTimeMillis());
+        String quantity = accountInfoDto.getAvailableBalance().toString();
 
-        OrderRequestDto orderRequestDto = new OrderRequestDto(binanceProperties.getSymbol(), side, positionSide,type, timeStamp ,price);
+        if (quantity.length() > 5) quantity = quantity.substring(0, 5);
 
         String queryString = "side=" + side;
+        queryString += "&symbol=" + binanceProperties.getSymbol();
+        queryString += "&quantity=" + quantity;
         queryString += "&type=" + type;
         queryString += "&positionSide=" + positionSide;
-        queryString += "&price" + price.toString();
         queryString += "&timestamp=" + timeStamp;
 
         String sig = getSignature(queryString);

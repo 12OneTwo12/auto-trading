@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -40,14 +41,14 @@ public class AutoTradingServiceImpl implements AutoTradingService {
 
             binanceService.buyIt(longOrShot, accountInfoDto);
 
-            if (longOrShot.isNeedToBuy() && accountInfoDto.getAvailableBalance() > 0) binanceService.buyIt(longOrShot, accountInfoDto);
+            if (longOrShot.isNeedToBuy() && accountInfoDto.getAvailableBalance().compareTo(BigDecimal.ZERO) > 0) binanceService.buyIt(longOrShot, accountInfoDto);
         }
     }
 
     private boolean isNeedToSell(AccountInfoDto accountInfoDto) {
         Double profitPercent = 3.0;
         Double lossPercent = -1.5;
-        Double rate = accountInfoDto.getRate();
+        Double rate = accountInfoDto.getRate().doubleValue();
 
         return profitPercent <= rate || lossPercent <= rate;
     }

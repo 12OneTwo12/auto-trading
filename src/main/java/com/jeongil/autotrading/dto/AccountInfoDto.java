@@ -2,6 +2,8 @@ package com.jeongil.autotrading.dto;
 
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @ToString
@@ -10,7 +12,8 @@ import lombok.*;
 public class AccountInfoDto {
 
     private boolean hasPosition;
-    private Double rate;
-    private Double availableBalance;
-    private Double myPositionPrice;
+    private BigDecimal rate;
+    private BigDecimal availableBalance;
+    private BigDecimal myPositionPrice;
+    private BigDecimal myPositionQuantity;
 }

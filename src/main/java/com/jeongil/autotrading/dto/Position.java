@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,8 +15,9 @@ public class Position {
 
     private String symbol;
     private Integer leverage;
-    private Double entryPrice;
-    private Double markPrice;
-    private Double unrealizedProfit;
+    private BigDecimal entryPrice;
+    private BigDecimal markPrice;
+    private BigDecimal unrealizedProfit;
     private String positionSide;
+    private BigDecimal positionAmt;
 }

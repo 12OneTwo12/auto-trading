@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,5 +18,5 @@ public class OrderRequestDto {
     private String positionSide;
     private String type;
     private String timestamp;
-    private Double price;
+    private BigDecimal price;
 }
