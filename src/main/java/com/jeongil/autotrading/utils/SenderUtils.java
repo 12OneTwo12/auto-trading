@@ -4,6 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jeongil.autotrading.common.exception.SendMessageException;
 import com.jeongil.autotrading.common.properties.BinanceProperties;
 import com.jeongil.autotrading.common.properties.SlackProperties;
+import com.slack.api.Slack;
+import com.slack.api.methods.MethodsClient;
+import com.slack.api.methods.SlackApiException;
+import com.slack.api.methods.request.chat.ChatPostMessageRequest;
+import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
@@ -44,27 +49,21 @@ public class SenderUtils {
     private BinanceProperties binanceProperties;
 
     public void sendSlack(String message){
+        Slack slack = Slack.getInstance();
+        String token = slackProperties.getToken();
+        MethodsClient methods = slack.methods(token);
+
+        // Build a request object
+        ChatPostMessageRequest request = ChatPostMessageRequest.builder()
+                .channel("#자동-매매") // 채널명 or 채널 ID
+                .text(message)
+                .build();
+
+        // Get a response as a Java object
         try {
-            URL url = new URL(slackProperties.getMessageUrl());
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json");
-            connection.setDoOutput(true);
-
-            Map<String, String> body = new HashMap<>();
-            body.put("text", message);
-            String jsonString = objectMapper.writeValueAsString(body);
-
-            OutputStream os = connection.getOutputStream();
-            os.write(jsonString.getBytes(StandardCharsets.UTF_8));
-            os.flush();
-            os.close();
-
-            connection.getResponseCode();
-            connection.disconnect();
-        } catch (IOException e) {
-            sendSlack(getErrorMessage("SendMessageException","slack.SendException"));
-            throw SendMessageException.ofError("slack.SendException");
+            ChatPostMessageResponse response = methods.chatPostMessage(request);
+        } catch (Exception e) {
+            throw new SendMessageException(e.getMessage());
         }
     }
 
@@ -291,7 +290,7 @@ public class SenderUtils {
             methodName = callingMethod.getMethodName();
         }
 
-        return jobName + " : " + message + " | 실행 시각 : " + LocalDateTime.now().toString() + " /n "
+        return jobName + " : " + message + " \n 실행 시각 : " + LocalDateTime.now().toString() + " \n "
                 + "method name : " + methodName;
     }
 
