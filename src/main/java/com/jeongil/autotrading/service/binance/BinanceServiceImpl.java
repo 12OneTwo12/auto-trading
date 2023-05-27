@@ -144,11 +144,28 @@ public class BinanceServiceImpl implements BinanceService{
             throw RequestOrderException.ofError("Order Response가 비정상적입니다.");
         }
 
+        Integer setLeverage = 20;
+        String leverageQueryString = "symbol=" + binanceProperties.getSymbol();
+        leverageQueryString += "&leverage=" + setLeverage;
+        leverageQueryString += "&timestamp=" + timeStamp;
+
+        String leverSig = getSignature(leverageQueryString);
+        leverageQueryString += "&signature=" + leverSig;
+
+        String setLeverageUrl = binanceProperties.getDefaultUrl() + binanceProperties.getLeverageUrl() + "?" + leverageQueryString;
+
+        LeverageResponseDto leverageResponseDto = senderUtils.sendGet(HttpMethod.POST, setLeverageUrl, new LeverageResponseDto());
+
         TradeHistory tradeHistory = getLastTradeHistory();
 
         String message = "[ Future Buy completed - " + "position side : " + tradeHistory.getPositionSide() + " price : " + tradeHistory.getPrice() + " ]";
 
         senderUtils.sendSlack(message);
+
+        if (!setLeverage.equals(leverageResponseDto.getLeverage())){
+            senderUtils.sendSlack(senderUtils.getErrorMessage("RequestOrderException", "Set Leverage Response가 비정상적입니다."));
+            throw RequestOrderException.ofError("Set Leverage Response가 비정상적입니다.");
+        }
     }
 
     @Override

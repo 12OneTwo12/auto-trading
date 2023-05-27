@@ -21,5 +21,6 @@ public class BinanceProperties {
     private String takerLongShotRatioUrl;
     private String orderUrl;
     private String userTradesUrl;
+    private String leverageUrl;
     private String symbol;
 }
