@@ -56,8 +56,14 @@ public class BinanceServiceImpl implements BinanceService{
 
                 if (position.getUnrealizedProfit().compareTo(BigDecimal.ZERO) == 0) continue;
 
+                BigDecimal positionAmt = position.getPositionAmt();
+
+                if (positionAmt.signum() == -1) { // 숫자가 음수인 경우
+                    positionAmt = positionAmt.multiply(BigDecimal.valueOf(-1)) ; // 부호를 반전하여 양수로 변환
+                }
+
                 unrealizedProfit = position.getUnrealizedProfit();
-                BigDecimal decimal = unrealizedProfit.divide(position.getEntryPrice().multiply(position.getPositionAmt()), 2);
+                BigDecimal decimal = unrealizedProfit.divide(position.getEntryPrice().multiply(positionAmt), 2);
                 percentageDifference = decimal.multiply(BigDecimal.valueOf(100)).multiply(BigDecimal.valueOf(position.getLeverage()));
 
                 myPositionQuantity = position.getPositionAmt();
