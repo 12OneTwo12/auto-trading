@@ -109,7 +109,7 @@ public class BinanceServiceImpl implements BinanceService{
 
     @Override
     public void buyIt(LongOrShot longOrShot, AccountInfoDto accountInfoDto) {
-        String side = "BUY";
+        String side = longOrShot.isLong() ? "BUY" : "SELL";
         String type = "MARKET";
         String positionSide = longOrShot.isLong() ? "LONG" : "SHORT";
         String timeStamp = Long.toString(System.currentTimeMillis());
@@ -194,9 +194,7 @@ public class BinanceServiceImpl implements BinanceService{
 
         String url = binanceProperties.getDefaultUrl() + binanceProperties.getGetAccountInfoUrl() + "?" + queryString;
 
-        List<TradeHistory> tradeHistories = new ArrayList<>();
-
-        List<TradeHistory> tradeHistory = senderUtils.sendGet(HttpMethod.GET, url, tradeHistories);
+        List<TradeHistory> tradeHistory = senderUtils.sendList(HttpMethod.GET, url, new TradeHistory());
 
         return tradeHistory.get(0);
     }
