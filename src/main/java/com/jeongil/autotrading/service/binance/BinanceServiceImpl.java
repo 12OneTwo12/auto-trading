@@ -47,6 +47,7 @@ public class BinanceServiceImpl implements BinanceService{
         BigDecimal percentageDifference = BigDecimal.ZERO;
         BigDecimal myPositionPrice = BigDecimal.ZERO;
         BigDecimal myPositionQuantity = BigDecimal.ZERO;
+        BigDecimal unrealizedProfit = BigDecimal.ZERO;
         Boolean isLong = false;
 
         for (Position position : accountDetailInfoDto.getPositions()) {
@@ -55,8 +56,10 @@ public class BinanceServiceImpl implements BinanceService{
 
                 if (position.getUnrealizedProfit().compareTo(BigDecimal.ZERO) == 0) continue;
 
-                BigDecimal decimal = position.getUnrealizedProfit().divide(position.getEntryPrice(), 2);
-                percentageDifference = decimal.multiply(BigDecimal.valueOf(100));
+                unrealizedProfit = position.getUnrealizedProfit();
+                BigDecimal decimal = unrealizedProfit.divide(position.getEntryPrice().multiply(position.getPositionAmt()), 2);
+                percentageDifference = decimal.multiply(BigDecimal.valueOf(100)).multiply(BigDecimal.valueOf(position.getLeverage()));
+
                 myPositionQuantity = position.getPositionAmt();
                 isLong = position.getPositionSide().equals("LONG") ? true : false;
             }
@@ -68,7 +71,7 @@ public class BinanceServiceImpl implements BinanceService{
             if ("BTC".equals(asset.getAsset())) availableBalance = asset.getAvailableBalance();
         }
         
-        return new AccountInfoDto(hasPosition, percentageDifference, availableBalance, myPositionPrice, myPositionQuantity, isLong);
+        return new AccountInfoDto(hasPosition, percentageDifference, availableBalance, myPositionPrice, myPositionQuantity, unrealizedProfit, isLong);
     }
 
     @Override
@@ -110,7 +113,7 @@ public class BinanceServiceImpl implements BinanceService{
         String winOrLose = accountInfoDto.getRate().compareTo(BigDecimal.ZERO) > 0 ? "이익" : "손해";
         winOrLose += " - ";
 
-        String message = winOrLose + " [ Future Sell completed - " + " 실현 금액 : " + tradeHistory.getRealizedPnl() + " position side : " + tradeHistory.getPositionSide() + " 수익률 : " + accountInfoDto.getRate() + " ]";
+        String message = winOrLose + " [ Future Sell completed - " + " 손익 금액 : " + accountInfoDto.getUnrealizedProfit() + " position side : " + tradeHistory.getPositionSide() + " 수익률 : " + accountInfoDto.getRate() + " ]";
 
         senderUtils.sendSlack(message);
     }
@@ -158,7 +161,7 @@ public class BinanceServiceImpl implements BinanceService{
 
         TradeHistory tradeHistory = getLastTradeHistory();
 
-        String message = "[ Future Buy completed - " + "position side : " + tradeHistory.getPositionSide() + " price : " + tradeHistory.getPrice() + " ]";
+        String message = "[ Future Buy completed - " + "position side : " + positionSide + " quantity : " + quantity + " ]";
 
         senderUtils.sendSlack(message);
 

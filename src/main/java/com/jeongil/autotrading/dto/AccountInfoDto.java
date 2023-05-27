@@ -16,5 +16,6 @@ public class AccountInfoDto {
     private BigDecimal availableBalance;
     private BigDecimal myPositionPrice;
     private BigDecimal myPositionQuantity;
+    private BigDecimal unrealizedProfit;
     private Boolean isLong;
 }
