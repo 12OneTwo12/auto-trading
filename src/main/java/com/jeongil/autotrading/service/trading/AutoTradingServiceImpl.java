@@ -46,7 +46,7 @@ public class AutoTradingServiceImpl implements AutoTradingService {
         Double lossPercent = -1.5;
         Double rate = accountInfoDto.getRate().doubleValue();
 
-        return profitPercent <= rate || lossPercent <= rate;
+        return profitPercent <= rate || lossPercent >= rate;
     }
 
     private LongOrShot longOrShotAndTheseINeedToBuy() {

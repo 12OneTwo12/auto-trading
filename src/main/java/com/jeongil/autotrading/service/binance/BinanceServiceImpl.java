@@ -80,6 +80,10 @@ public class BinanceServiceImpl implements BinanceService{
 
         String quantity = accountInfoDto.getMyPositionQuantity().toString();
 
+        if (accountInfoDto.getMyPositionQuantity().signum() == -1) { // 숫자가 음수인 경우
+            quantity = accountInfoDto.getMyPositionQuantity().negate().toString(); // 부호를 반전하여 양수로 변환
+        }
+
         if (quantity.length() > 5) quantity = quantity.substring(0, 5);
 
         String queryString = "side=" + side;
