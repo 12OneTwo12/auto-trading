@@ -32,14 +32,10 @@ public class AutoTradingServiceImpl implements AutoTradingService {
     public void process(){
         AccountInfoDto accountInfoDto = binanceService.getMyAccountPosition();
 
-        System.out.println(accountInfoDto.toString());
-
         if (accountInfoDto.isHasPosition()){
             if (isNeedToSell(accountInfoDto)) binanceService.sellIt(accountInfoDto);
         } else {
             LongOrShot longOrShot = longOrShotAndTheseINeedToBuy();
-
-            binanceService.buyIt(longOrShot, accountInfoDto);
 
             if (longOrShot.isNeedToBuy() && accountInfoDto.getAvailableBalance().compareTo(BigDecimal.ZERO) > 0) binanceService.buyIt(longOrShot, accountInfoDto);
         }

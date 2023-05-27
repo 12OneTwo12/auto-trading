@@ -16,7 +16,6 @@ public class Position {
     private String symbol;
     private Integer leverage;
     private BigDecimal entryPrice;
-    private BigDecimal markPrice;
     private BigDecimal unrealizedProfit;
     private String positionSide;
     private BigDecimal positionAmt;

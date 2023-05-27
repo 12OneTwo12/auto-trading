@@ -47,6 +47,7 @@ public class BinanceServiceImpl implements BinanceService{
         BigDecimal percentageDifference = BigDecimal.ZERO;
         BigDecimal myPositionPrice = BigDecimal.ZERO;
         BigDecimal myPositionQuantity = BigDecimal.ZERO;
+        Boolean isLong = false;
 
         for (Position position : accountDetailInfoDto.getPositions()) {
             if (position.getSymbol().equals(binanceProperties.getSymbol()) && position.getEntryPrice().compareTo(BigDecimal.ZERO) > 0)  {
@@ -54,9 +55,10 @@ public class BinanceServiceImpl implements BinanceService{
 
                 if (position.getUnrealizedProfit().compareTo(BigDecimal.ZERO) == 0) continue;
 
-                BigDecimal decimal = position.getUnrealizedProfit().divide(position.getMarkPrice());
+                BigDecimal decimal = position.getUnrealizedProfit().divide(position.getEntryPrice(), 2);
                 percentageDifference = decimal.multiply(BigDecimal.valueOf(100));
                 myPositionQuantity = position.getPositionAmt();
+                isLong = position.getPositionSide().equals("LONG") ? true : false;
             }
         }
 
@@ -66,14 +68,15 @@ public class BinanceServiceImpl implements BinanceService{
             if ("BTC".equals(asset.getAsset())) availableBalance = asset.getAvailableBalance();
         }
         
-        return new AccountInfoDto(hasPosition, percentageDifference, availableBalance, myPositionPrice, myPositionQuantity);
+        return new AccountInfoDto(hasPosition, percentageDifference, availableBalance, myPositionPrice, myPositionQuantity, isLong);
     }
 
     @Override
     public void sellIt(AccountInfoDto accountInfoDto) {
-        String side = "SELL";
+        String side = accountInfoDto.getIsLong() ? "SELL" : "BUY";
         String type = "MARKET";
         String timeStamp = Long.toString(System.currentTimeMillis());
+        String positionSide = accountInfoDto.getIsLong() ? "LONG" : "SHORT";
 
         String quantity = accountInfoDto.getMyPositionQuantity().toString();
 
@@ -81,6 +84,7 @@ public class BinanceServiceImpl implements BinanceService{
 
         String queryString = "side=" + side;
         queryString += "&type=" + type;
+        queryString += "&positionSide=" + positionSide;
         queryString += "&quantity=" + quantity;
         queryString += "&symbol=" + binanceProperties.getSymbol();
         queryString += "&timestamp=" + timeStamp;
@@ -181,7 +185,8 @@ public class BinanceServiceImpl implements BinanceService{
         }
     }
 
-    private TradeHistory getLastTradeHistory() {
+    @Override
+    public TradeHistory getLastTradeHistory() {
         String timeStamp = Long.toString(System.currentTimeMillis());
 
         String queryString = "timestamp=" + timeStamp;
@@ -192,7 +197,7 @@ public class BinanceServiceImpl implements BinanceService{
 
         queryString += "&signature=" + signature;
 
-        String url = binanceProperties.getDefaultUrl() + binanceProperties.getGetAccountInfoUrl() + "?" + queryString;
+        String url = binanceProperties.getDefaultUrl() + binanceProperties.getUserTradesUrl() + "?" + queryString;
 
         List<TradeHistory> tradeHistory = senderUtils.sendList(HttpMethod.GET, url, new TradeHistory());
 

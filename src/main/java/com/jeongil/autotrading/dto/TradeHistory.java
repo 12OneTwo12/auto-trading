@@ -12,9 +12,9 @@ import lombok.Setter;
 public class TradeHistory {
 
     private Boolean maker;
-    private Boolean realizedPnl;
+    private String realizedPnl;
     private String side;
     private String positionSide;
     private String symbol;
-    private Double price;
+    private String price;
 }
