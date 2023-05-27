@@ -175,7 +175,7 @@ public class BinanceServiceImpl implements BinanceService{
     public List<BuySellVolume> getBuySellVolume() {
         String queryString = "symbol=" + binanceProperties.getSymbol();
         queryString += "&period=" + "5m";
-        queryString += "&limit=" + "3";
+        queryString += "&limit=" + "2";
 
         String url = binanceProperties.getDefaultUrl() + binanceProperties.getTakerLongShotRatioUrl() + "?" + queryString;
 
