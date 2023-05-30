@@ -19,6 +19,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientException;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
@@ -185,14 +186,15 @@ public class SenderUtils {
             );
             String json = jsonMono.block();
 
-            System.out.println("return json : "+json);
-
             T responseModel = (T) objectMapper.readValue(json, responseClass.getClass());
 
             logger.debug("response = {}", responseModel.toString());
 
             return responseModel;
-        }  catch (Exception e) {
+        } catch (WebClientException e){
+            logger.error("e", e);
+            throw SendMessageException.ofError("webclient.SendException");
+        } catch (Exception e) {
             logger.error("e", e);
             sendSlack(getErrorMessage("SendMessageException","webclient.SendException"));
             throw SendMessageException.ofError("webclient.SendException");
@@ -242,8 +244,6 @@ public class SenderUtils {
                     response.bodyToMono(String.class)
             );
             String json = jsonMono.block();
-
-            System.out.println("return json : "+json);
 
             List<T> responses = new ArrayList<>();
 

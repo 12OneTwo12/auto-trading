@@ -1,0 +1,72 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
+
+name: Java CI with Gradle
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        
+    - name: make properties
+      run: |
+        ## create application-secret.yml
+        cd ./src/main/resources/config/properties
+        # binance-properties.yml 파일 생성
+        touch ./binance-properties.yml
+        echo "${{ secrets.BINANCE }}" >> ./binance-properties.yml
+        # slack-properties.yml 파일 생성
+        touch ./slack-properties.yml
+        echo "${{ secrets.SLACK }}" >> ./slack-properties.yml
+      shell: bash
+        
+    - name: Change wrapper permissions
+      run: chmod +x ./gradlew
+        
+    - name: Build with Gradle
+      run: ./gradlew build -x test
+  
+    - name: web docker login
+      run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+    - name: web docker build
+      run: docker build --platform amd64 --build-arg DEPENDENCY=build/dependency -t ${{secrets.DOCKER_USERNAME}}/auto-trading .
+    - name: web docker tag 
+      run: docker tag ${{secrets.DOCKER_USERNAME}}/auto-trading ${{secrets.DOCKER_USERNAME}}/auto-trading:latest
+    - name: web docker push
+      run: docker push ${{secrets.DOCKER_USERNAME}}/auto-trading:latest
+        
+    - name: executing remote ssh commands using password
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ubuntu
+        key: ${{ secrets.KEY }}
+        port: 22
+        script: |
+          docker stop auto-trading
+          docker rm auto-trading
+          docker pull ${{secrets.DOCKER_USERNAME}}/auto-trading:latest
+          docker run --name auto-trading -d -p 8080:8080 -v /etc/localtime:/etc/localtime:ro -e TZ=Asia/Seoul ${{secrets.DOCKER_USERNAME}}/auto-trading:latest
+          
