@@ -42,8 +42,8 @@ public class AutoTradingServiceImpl implements AutoTradingService {
     }
 
     private boolean isNeedToSell(AccountInfoDto accountInfoDto) {
-        Double profitPercent = 5.0;
-        Double lossPercent = -2.5;
+        Double profitPercent = 10.0;
+        Double lossPercent = -4.5;
         Double rate = accountInfoDto.getRate().doubleValue();
 
         return profitPercent <= rate || lossPercent >= rate;
@@ -73,6 +73,9 @@ public class AutoTradingServiceImpl implements AutoTradingService {
 
         Double standardVolume = isLong ? avgBuyVolume : avgSellVolume;
         Double compareVolume = isLong ? avgSellVolume : avgBuyVolume;
+
+        System.out.println("standardVolume : " + standardVolume);
+        System.out.println("compareVolume : " + compareVolume);
 
         boolean isNeedToBuy = standardVolume >= compareVolume * 1.5;
 
