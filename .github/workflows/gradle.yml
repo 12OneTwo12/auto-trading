@@ -42,10 +42,11 @@ jobs:
         echo "${{ secrets.SLACK }}" >> ./slack-properties.yml
       shell: bash
         
+    - name: Build with Gradle rnjsgks
+      run: git update-index --chmod=+x gradlew
+        
     - name: Build with Gradle
-      run:
-        git update-index --chmod=+x gradlew
-        ./gradlew build -x test
+      run: ./gradlew build -x test
   
     - name: web docker login
       run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
