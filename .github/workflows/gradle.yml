@@ -36,10 +36,10 @@ jobs:
         cd ./src/main/resources/config/properties
         # binance-properties.yml 파일 생성
         touch ./binance-properties.yml
-        echo "${{ secrets.binance }}" >> ./binance-properties.yml
+        echo "${{ secrets.BINANCE }}" >> ./binance-properties.yml
         # slack-properties.yml 파일 생성
         touch ./slack-properties.yml
-        echo "${{ secrets.slack }}" >> ./slack-properties.yml
+        echo "${{ secrets.SLACK }}" >> ./slack-properties.yml
       shell: bash
         
     - name: Build with Gradle
