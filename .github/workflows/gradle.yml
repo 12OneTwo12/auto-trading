@@ -65,5 +65,5 @@ jobs:
           docker stop auto-trading
           docker rm auto-trading
           docker pull ${{secrets.DOCKER_USERNAME}}/auto-trading:latest
-          docker run --name auto-trading -d -p 8080:8080 -v /etc/localtime:/etc/localtime:ro -e TZ=Asia/Seoul jji0428/auto-trading:latest
+          docker run --name auto-trading -d -p 8080:8080 -v /etc/localtime:/etc/localtime:ro -e TZ=Asia/Seoul ${{secrets.DOCKER_USERNAME}}/auto-trading:latest
           
