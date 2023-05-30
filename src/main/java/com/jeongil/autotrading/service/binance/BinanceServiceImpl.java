@@ -116,10 +116,10 @@ public class BinanceServiceImpl implements BinanceService{
 
         TradeHistory tradeHistory = getLastTradeHistory();
 
-        String winOrLose = accountInfoDto.getRate().compareTo(BigDecimal.ZERO) > 0 ? "이익" : "손해";
-        winOrLose += " - ";
-
-        String message = winOrLose + " [ Future Sell completed - " + " 손익 금액 : " + accountInfoDto.getUnrealizedProfit() + " position side : " + tradeHistory.getPositionSide() + " 수익률 : " + accountInfoDto.getRate() + " ]";
+        String winOrLose = accountInfoDto.getRate().compareTo(BigDecimal.ZERO) > 0 ? "익절" : "손절";
+        String rate = accountInfoDto.getRate().compareTo(BigDecimal.ZERO) > 0 ? accountInfoDto.getRate().toString().substring(0, 4) : accountInfoDto.getRate().toString().substring(0, 5);
+        
+        String message = "*" + winOrLose + "*" + " - [ 포지션 종료 - " + " 수익률 : `" + rate + "%`" + " 손익 금액 : " + accountInfoDto.getUnrealizedProfit() + " position side : " + tradeHistory.getPositionSide() + " ]";
 
         senderUtils.sendSlack(message);
     }
@@ -167,7 +167,7 @@ public class BinanceServiceImpl implements BinanceService{
 
         TradeHistory tradeHistory = getLastTradeHistory();
 
-        String message = "[ Future Buy completed - " + "position side : " + positionSide + " quantity : " + quantity + " ]";
+        String message = "[ 구매 완료 - " + "position side : " + positionSide + " 포지션 수량 : " + quantity + " ]";
 
         senderUtils.sendSlack(message);
 
