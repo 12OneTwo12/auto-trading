@@ -43,7 +43,9 @@ jobs:
       shell: bash
         
     - name: Build with Gradle
-      run: ./gradlew build -x test
+      run:
+        chmod +x ./gradlew
+        ./gradlew build -x test
   
     - name: web docker login
       run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
