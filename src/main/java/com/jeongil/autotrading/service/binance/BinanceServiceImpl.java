@@ -130,7 +130,8 @@ public class BinanceServiceImpl implements BinanceService{
         String type = "MARKET";
         String positionSide = longOrShot.isLong() ? "LONG" : "SHORT";
         String timeStamp = Long.toString(System.currentTimeMillis());
-        String quantity = accountInfoDto.getAvailableBalance().toString();
+        Integer setLeverage = 20;
+        String quantity = accountInfoDto.getAvailableBalance().multiply(BigDecimal.valueOf(setLeverage)).toString();
 
         if (quantity.length() > 5) quantity = quantity.substring(0, 5);
 
@@ -153,7 +154,6 @@ public class BinanceServiceImpl implements BinanceService{
             throw RequestOrderException.ofError("Order Response가 비정상적입니다.");
         }
 
-        Integer setLeverage = 20;
         String leverageQueryString = "symbol=" + binanceProperties.getSymbol();
         leverageQueryString += "&leverage=" + setLeverage;
         leverageQueryString += "&timestamp=" + timeStamp;
