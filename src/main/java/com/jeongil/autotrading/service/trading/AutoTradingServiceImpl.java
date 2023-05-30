@@ -43,7 +43,7 @@ public class AutoTradingServiceImpl implements AutoTradingService {
 
     private boolean isNeedToSell(AccountInfoDto accountInfoDto) {
         Double profitPercent = 10.0;
-        Double lossPercent = -4.5;
+        Double lossPercent = -7.0;
         Double rate = accountInfoDto.getRate().doubleValue();
 
         return profitPercent <= rate || lossPercent >= rate;
