@@ -44,7 +44,7 @@ jobs:
         
     - name: Build with Gradle
       run:
-        chmod +x ./gradlew
+        git update-index --chmod=+x gradlew
         ./gradlew build -x test
   
     - name: web docker login
