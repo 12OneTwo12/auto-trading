@@ -100,7 +100,7 @@ public class AutoTradingServiceImpl implements AutoTradingService {
         Double standardVolume = isLong ? avgBuyVolume : avgSellVolume;
         Double compareVolume = isLong ? avgSellVolume : avgBuyVolume;
 
-        boolean isNeedToBuy = standardVolume >= compareVolume * 1.7;
+        boolean isNeedToBuy = standardVolume >= compareVolume * 2.5;
 
         return new LongOrShot(isLong, isNeedToBuy);
     }
