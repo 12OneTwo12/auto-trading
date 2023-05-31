@@ -42,7 +42,7 @@ public class AutoTradingServiceImpl implements AutoTradingService {
     }
 
     private boolean isNeedToSell(AccountInfoDto accountInfoDto) {
-        List<BuySellVolume> buySellVolumes = binanceService.getBuySellVolume("2");
+        List<BuySellVolume> buySellVolumes = binanceService.getBuySellVolume("1");
         int volumeListSize = buySellVolumes.size();
 
         Double totalBuyVolume = 0D;
@@ -76,7 +76,7 @@ public class AutoTradingServiceImpl implements AutoTradingService {
     }
 
     private LongOrShot longOrShotAndTheseINeedToBuy() {
-        List<BuySellVolume> buySellVolumes = binanceService.getBuySellVolume("2");
+        List<BuySellVolume> buySellVolumes = binanceService.getBuySellVolume("1");
         int volumeListSize = buySellVolumes.size();
 
         Double totalBuyVolume = 0D;
@@ -100,7 +100,7 @@ public class AutoTradingServiceImpl implements AutoTradingService {
         Double standardVolume = isLong ? avgBuyVolume : avgSellVolume;
         Double compareVolume = isLong ? avgSellVolume : avgBuyVolume;
 
-        boolean isNeedToBuy = standardVolume >= compareVolume * 1.5;
+        boolean isNeedToBuy = standardVolume >= compareVolume * 1.7;
 
         return new LongOrShot(isLong, isNeedToBuy);
     }
