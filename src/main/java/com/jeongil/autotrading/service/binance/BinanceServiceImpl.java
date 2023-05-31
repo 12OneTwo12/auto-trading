@@ -178,10 +178,10 @@ public class BinanceServiceImpl implements BinanceService{
     }
 
     @Override
-    public List<BuySellVolume> getBuySellVolume() {
+    public List<BuySellVolume> getBuySellVolume(String limit) {
         String queryString = "symbol=" + binanceProperties.getSymbol();
         queryString += "&period=" + "5m";
-        queryString += "&limit=" + "2";
+        queryString += "&limit=" + limit;
 
         String url = binanceProperties.getDefaultUrl() + binanceProperties.getTakerLongShotRatioUrl() + "?" + queryString;
 

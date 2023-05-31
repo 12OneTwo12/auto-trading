@@ -12,7 +12,7 @@ public interface BinanceService {
 
     void buyIt(LongOrShot longOrShot, AccountInfoDto accountInfoDto);
 
-    List<BuySellVolume> getBuySellVolume();
+    List<BuySellVolume> getBuySellVolume(String limit);
 
     AccountInfoDto getMyAccountPosition();
 

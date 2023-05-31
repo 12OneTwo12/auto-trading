@@ -42,15 +42,41 @@ public class AutoTradingServiceImpl implements AutoTradingService {
     }
 
     private boolean isNeedToSell(AccountInfoDto accountInfoDto) {
+        List<BuySellVolume> buySellVolumes = binanceService.getBuySellVolume("2");
+        int volumeListSize = buySellVolumes.size();
+
+        Double totalBuyVolume = 0D;
+        Double totalSellVolume = 0D;
+
+        for (BuySellVolume buySellVolume : buySellVolumes) {
+            totalBuyVolume += Double.valueOf(buySellVolume.getBuyVol());
+            totalSellVolume += Double.valueOf(buySellVolume.getSellVol());
+        }
+
+        Double avgBuyVolume = 0D;
+        Double avgSellVolume = 0D;
+
+        if (volumeListSize > 0){
+            avgBuyVolume = totalBuyVolume / volumeListSize;
+            avgSellVolume = totalSellVolume / volumeListSize;
+        }
+
+        boolean isLong = accountInfoDto.getIsLong();
+
+        Double standardVolume = isLong ? avgSellVolume : avgBuyVolume;
+        Double compareVolume = isLong ? avgBuyVolume : avgSellVolume;
+
+        boolean buySellVolumeNeedToSell = standardVolume >= compareVolume * 2;
+
         Double profitPercent = 7.0;
         Double lossPercent = -4.0;
         Double rate = accountInfoDto.getRate().doubleValue();
 
-        return profitPercent <= rate || lossPercent >= rate;
+        return buySellVolumeNeedToSell || (profitPercent <= rate || lossPercent >= rate);
     }
 
     private LongOrShot longOrShotAndTheseINeedToBuy() {
-        List<BuySellVolume> buySellVolumes = binanceService.getBuySellVolume();
+        List<BuySellVolume> buySellVolumes = binanceService.getBuySellVolume("2");
         int volumeListSize = buySellVolumes.size();
 
         Double totalBuyVolume = 0D;
@@ -73,9 +99,6 @@ public class AutoTradingServiceImpl implements AutoTradingService {
 
         Double standardVolume = isLong ? avgBuyVolume : avgSellVolume;
         Double compareVolume = isLong ? avgSellVolume : avgBuyVolume;
-
-        System.out.println("standardVolume : " + standardVolume);
-        System.out.println("compareVolume : " + compareVolume);
 
         boolean isNeedToBuy = standardVolume >= compareVolume * 1.5;
 
