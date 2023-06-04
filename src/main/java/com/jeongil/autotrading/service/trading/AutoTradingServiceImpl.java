@@ -76,7 +76,7 @@ public class AutoTradingServiceImpl implements AutoTradingService {
     }
 
     private LongOrShot longOrShotAndTheseINeedToBuy() {
-        List<BuySellVolume> buySellVolumes = binanceService.getBuySellVolume("1");
+        List<BuySellVolume> buySellVolumes = binanceService.getBuySellVolume("3");
         int volumeListSize = buySellVolumes.size();
 
         Double totalBuyVolume = 0D;
