@@ -5,6 +5,7 @@ import com.jeongil.autotrading.dto.AccountInfoDto;
 import com.jeongil.autotrading.dto.BuySellVolume;
 import com.jeongil.autotrading.dto.LongOrShot;
 import com.jeongil.autotrading.service.binance.BinanceService;
+import com.jeongil.autotrading.utils.GlobalStatus;
 import com.jeongil.autotrading.utils.SenderUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,15 +69,15 @@ public class AutoTradingServiceImpl implements AutoTradingService {
 
         boolean buySellVolumeNeedToSell = standardVolume >= compareVolume * 2;
 
-        Double profitPercent = 7.0;
-        Double lossPercent = -4.0;
+        Double profitPercent = 20.0 + GlobalStatus.chargePercent;
+        Double lossPercent = -4.7 + GlobalStatus.chargePercent;
         Double rate = accountInfoDto.getRate().doubleValue();
 
         return buySellVolumeNeedToSell || (profitPercent <= rate || lossPercent >= rate);
     }
 
     private LongOrShot longOrShotAndTheseINeedToBuy() {
-        List<BuySellVolume> buySellVolumes = binanceService.getBuySellVolume("3");
+        List<BuySellVolume> buySellVolumes = binanceService.getBuySellVolume("1");
         int volumeListSize = buySellVolumes.size();
 
         Double totalBuyVolume = 0D;
@@ -100,7 +101,7 @@ public class AutoTradingServiceImpl implements AutoTradingService {
         Double standardVolume = isLong ? avgBuyVolume : avgSellVolume;
         Double compareVolume = isLong ? avgSellVolume : avgBuyVolume;
 
-        boolean isNeedToBuy = standardVolume <= compareVolume * 2.5;
+        boolean isNeedToBuy = standardVolume <= compareVolume * 3.5;
 
         return new LongOrShot(isLong, isNeedToBuy);
     }
