@@ -10,6 +10,7 @@ import com.slack.api.methods.request.chat.ChatPostMessageRequest;
 import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
@@ -183,7 +184,7 @@ public class SenderUtils {
 
             T responseModel = (T) objectMapper.readValue(json, responseClass.getClass());
 
-            log.info("response = {}", responseModel.toString());
+            log.info("response = {}", ToStringBuilder.reflectionToString(responseModel));
 
             return responseModel;
         } catch (WebClientException e){
