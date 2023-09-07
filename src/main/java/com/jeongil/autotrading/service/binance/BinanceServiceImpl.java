@@ -131,7 +131,7 @@ public class BinanceServiceImpl implements BinanceService{
         String positionSide = longOrShot.isLong() ? "LONG" : "SHORT";
         String timeStamp = Long.toString(System.currentTimeMillis());
         Integer setLeverage = 125;
-        String quantity = accountInfoDto.getAvailableBalance().multiply(BigDecimal.valueOf(setLeverage)).toString();
+        String quantity = accountInfoDto.getAvailableBalance().multiply(BigDecimal.valueOf(setLeverage-1)).toString();
 
         if (quantity.length() > 5) quantity = quantity.substring(0, 5);
 
