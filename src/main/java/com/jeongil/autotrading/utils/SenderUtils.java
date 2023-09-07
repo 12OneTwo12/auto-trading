@@ -183,7 +183,7 @@ public class SenderUtils {
 
             T responseModel = (T) objectMapper.readValue(json, responseClass.getClass());
 
-            log.debug("response = {}", responseModel.toString());
+            log.info("response = {}", responseModel.toString());
 
             return responseModel;
         } catch (WebClientException e){
