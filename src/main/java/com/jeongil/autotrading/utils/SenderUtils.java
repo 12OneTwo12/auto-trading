@@ -6,9 +6,10 @@ import com.jeongil.autotrading.common.properties.BinanceProperties;
 import com.jeongil.autotrading.common.properties.SlackProperties;
 import com.slack.api.Slack;
 import com.slack.api.methods.MethodsClient;
-import com.slack.api.methods.SlackApiException;
 import com.slack.api.methods.request.chat.ChatPostMessageRequest;
 import com.slack.api.methods.response.chat.ChatPostMessageResponse;
+import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
@@ -22,20 +23,14 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientException;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.lang.reflect.Field;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Consumer;
 
 @Component
+@Slf4j
 public class SenderUtils {
-
-    protected Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
     private SlackProperties slackProperties;
@@ -110,7 +105,7 @@ public class SenderUtils {
      */
     private <T> T retrieve(WebClient client, HttpMethod method, String uri, Object jsonData, Consumer<HttpHeaders> headers, T responseClass) {
 
-        System.out.println("url : " + uri);
+        log.info("url : " + uri);
 
         try {
             WebClient.RequestHeadersSpec<?> request = client.method(method)
@@ -128,15 +123,15 @@ public class SenderUtils {
             );
             String json = jsonMono.block();
 
-            System.out.println("return json : "+json);
+            log.info("return json : "+json);
 
             T responseModel = (T) objectMapper.readValue(json, responseClass.getClass());
 
-            logger.debug("response = {}", responseModel.toString());
+            log.debug("response = {}", responseModel.toString());
 
             return responseModel;
         }  catch (Exception e) {
-            logger.error("e", e);
+            log.error("e", e);
             sendSlack(getErrorMessage("SendMessageException","webclient.SendException"));
             throw SendMessageException.ofError("webclient.SendException");
         }
@@ -169,7 +164,7 @@ public class SenderUtils {
      */
     private <T> T retrieveGet(WebClient client, HttpMethod method, String uri, Consumer<HttpHeaders> headers, T responseClass) {
 
-        System.out.println("url : " + uri);
+        log.info("url : " + uri);
 
         try {
             WebClient.RequestHeadersSpec<?> request = client.method(method)
@@ -188,14 +183,14 @@ public class SenderUtils {
 
             T responseModel = (T) objectMapper.readValue(json, responseClass.getClass());
 
-            logger.debug("response = {}", responseModel.toString());
+            log.debug("response = {}", responseModel.toString());
 
             return responseModel;
         } catch (WebClientException e){
-            logger.error("e", e);
+            log.error("e", e);
             throw SendMessageException.ofError("webclient.SendException");
         } catch (Exception e) {
-            logger.error("e", e);
+            log.error("e", e);
             sendSlack(getErrorMessage("SendMessageException","webclient.SendException"));
             throw SendMessageException.ofError("webclient.SendException");
         }
@@ -228,7 +223,7 @@ public class SenderUtils {
      */
     private <T> List<T> retrieveList(WebClient client, HttpMethod method, String uri, Consumer<HttpHeaders> headers, T responseClass) {
 
-        System.out.println("url : " + uri);
+        log.info("url : " + uri);
 
         try {
             WebClient.RequestHeadersSpec<?> request = client.method(method)
@@ -256,7 +251,7 @@ public class SenderUtils {
 
             return responses;
         }  catch (Exception e) {
-            logger.error("e", e);
+            log.error("e", e);
             sendSlack(getErrorMessage("SendMessageException","webclient.SendException"));
             throw SendMessageException.ofError("webclient.SendException");
         }

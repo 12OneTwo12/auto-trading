@@ -2,6 +2,7 @@ package com.jeongil.autotrading.config.job;
 
 import com.jeongil.autotrading.service.trading.AutoTradingService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.batch.core.Job;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 
 @Configuration
 @RequiredArgsConstructor
+@Slf4j
 public class AutoTradingJobConfig {
     private final static String PROCESS_METHOD = "process";
 
@@ -30,8 +32,6 @@ public class AutoTradingJobConfig {
 
     @Autowired
     private final PlatformTransactionManager masterTransactionManager;
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     /*
      * Loaner Sms Job
@@ -45,7 +45,7 @@ public class AutoTradingJobConfig {
                 .build();
 
         LocalDateTime to = LocalDateTime.now();
-        logger.info("[ autoTradingJob run time : " +  Duration.between(from.toLocalTime(), to.toLocalTime()).getSeconds() + "s ]");
+        log.info("[ autoTradingJob run time : " +  Duration.between(from.toLocalTime(), to.toLocalTime()).getSeconds() + "s ]");
 
         return job;
     }

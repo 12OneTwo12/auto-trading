@@ -3,6 +3,7 @@ package com.jeongil.autotrading.service.quartz;
 import com.jeongil.autotrading.common.exception.JobException;
 import com.jeongil.autotrading.common.properties.JobProperties;
 import com.jeongil.autotrading.scheduler.QuartzJob;
+import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,10 +17,9 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 
 @Service
+@Slf4j
 public class QuartzServiceImpl implements QuartzService{
 
-   private static final Logger logger = LoggerFactory.getLogger(QuartzServiceImpl.class);
-   
    @Autowired
    private SchedulerFactoryBean schedulerFactoryBean;
 
@@ -61,7 +61,7 @@ public class QuartzServiceImpl implements QuartzService{
          scheduler.scheduleJob(jobDetail, cronTrigger);
       }
       catch (SchedulerException e) {
-         logger.error("addJob error!!", e);
+         log.error("addJob error!!", e);
          throw JobException.ofError("quartz.job.add.Exception");
       }
    }
@@ -82,7 +82,7 @@ public class QuartzServiceImpl implements QuartzService{
          scheduler.pauseJob(jobKey);
       }
       catch (SchedulerException e) {
-         logger.error("addJob error!!", e);
+         log.error("addJob error!!", e);
          throw JobException.ofError("quartz.job.SchedulerException");
       }
 
@@ -104,7 +104,7 @@ public class QuartzServiceImpl implements QuartzService{
          scheduler.resumeJob(jobKey);
       }
       catch (SchedulerException e) {
-         logger.error("resumeJob error!!", e);
+         log.error("resumeJob error!!", e);
          throw JobException.ofError("quartz.job.SchedulerException");
       }
 

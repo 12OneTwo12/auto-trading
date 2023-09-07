@@ -5,6 +5,8 @@ import com.jeongil.autotrading.common.exception.RequestOrderException;
 import com.jeongil.autotrading.common.properties.BinanceProperties;
 import com.jeongil.autotrading.dto.*;
 import com.jeongil.autotrading.utils.SenderUtils;
+import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,13 +17,11 @@ import org.springframework.stereotype.Service;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Slf4j
 public class BinanceServiceImpl implements BinanceService{
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
     private BinanceProperties binanceProperties;
@@ -130,7 +130,7 @@ public class BinanceServiceImpl implements BinanceService{
         String type = "MARKET";
         String positionSide = longOrShot.isLong() ? "LONG" : "SHORT";
         String timeStamp = Long.toString(System.currentTimeMillis());
-        Integer setLeverage = 20;
+        Integer setLeverage = 125;
         String quantity = accountInfoDto.getAvailableBalance().multiply(BigDecimal.valueOf(setLeverage)).toString();
 
         if (quantity.length() > 5) quantity = quantity.substring(0, 5);

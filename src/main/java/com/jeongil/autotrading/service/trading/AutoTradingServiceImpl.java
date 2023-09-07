@@ -7,6 +7,8 @@ import com.jeongil.autotrading.dto.LongOrShot;
 import com.jeongil.autotrading.service.binance.BinanceService;
 import com.jeongil.autotrading.utils.GlobalStatus;
 import com.jeongil.autotrading.utils.SenderUtils;
+import lombok.extern.log4j.Log4j;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +18,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @Service
+@Slf4j
 public class AutoTradingServiceImpl implements AutoTradingService {
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
     private SenderUtils senderUtils;
@@ -67,7 +68,7 @@ public class AutoTradingServiceImpl implements AutoTradingService {
         Double standardVolume = isLong ? avgSellVolume : avgBuyVolume;
         Double compareVolume = isLong ? avgBuyVolume : avgSellVolume;
 
-        boolean buySellVolumeNeedToSell = standardVolume >= compareVolume * 2;
+        boolean buySellVolumeNeedToSell = standardVolume >= compareVolume * 3.5;
 
         Double profitPercent = 20.0 + GlobalStatus.chargePercent;
         Double lossPercent = -4.7 + GlobalStatus.chargePercent;
@@ -101,7 +102,7 @@ public class AutoTradingServiceImpl implements AutoTradingService {
         Double standardVolume = isLong ? avgBuyVolume : avgSellVolume;
         Double compareVolume = isLong ? avgSellVolume : avgBuyVolume;
 
-        boolean isNeedToBuy = standardVolume <= compareVolume * 3.5;
+        boolean isNeedToBuy = standardVolume <= compareVolume * 8;
 
         return new LongOrShot(isLong, isNeedToBuy);
     }

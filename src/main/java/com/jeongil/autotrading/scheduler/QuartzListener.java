@@ -1,14 +1,14 @@
 package com.jeongil.autotrading.scheduler;
 
+import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.JobListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@Slf4j
 public class QuartzListener implements JobListener {
-   
-   private static final Logger logger = LoggerFactory.getLogger(QuartzListener.class);
    
    @Override
    public String getName() {
@@ -21,7 +21,7 @@ public class QuartzListener implements JobListener {
     */
    @Override
    public void jobToBeExecuted(JobExecutionContext context) {
-      logger.info("jobToBeExecuted !!!");
+      log.info("jobToBeExecuted !!!");
    }
  
    /**
@@ -30,7 +30,7 @@ public class QuartzListener implements JobListener {
     */
    @Override
    public void jobExecutionVetoed(JobExecutionContext context) {
-      logger.info("jobExecutionVetoed !!!");
+      log.info("jobExecutionVetoed !!!");
    }
 
    /**
@@ -48,6 +48,6 @@ public class QuartzListener implements JobListener {
     * */
    @Override
    public void jobWasExecuted(JobExecutionContext context, JobExecutionException jobException) {
-      logger.info("jobWasExecuted !!!");
+      log.info("jobWasExecuted !!!");
    }
 }
