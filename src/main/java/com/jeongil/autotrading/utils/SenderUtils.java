@@ -182,6 +182,8 @@ public class SenderUtils {
             );
             String json = jsonMono.block();
 
+            log.info("response json = {}", json);
+
             T responseModel = (T) objectMapper.readValue(json, responseClass.getClass());
 
             log.info("response = {}", ToStringBuilder.reflectionToString(responseModel));
