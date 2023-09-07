@@ -165,8 +165,6 @@ public class BinanceServiceImpl implements BinanceService{
 
         LeverageResponseDto leverageResponseDto = senderUtils.sendGet(HttpMethod.POST, setLeverageUrl, new LeverageResponseDto());
 
-        TradeHistory tradeHistory = getLastTradeHistory();
-
         String message = "[ 구매 완료 - " + "position side : " + positionSide + " 포지션 수량 : " + quantity + " ]";
 
         senderUtils.sendSlack(message);
