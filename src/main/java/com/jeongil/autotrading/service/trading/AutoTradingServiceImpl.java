@@ -70,8 +70,8 @@ public class AutoTradingServiceImpl implements AutoTradingService {
 
         boolean buySellVolumeNeedToSell = standardVolume >= compareVolume * 3.5;
 
-        Double profitPercent = 20.0 + GlobalStatus.chargePercent;
-        Double lossPercent = -4.7 + GlobalStatus.chargePercent;
+        Double profitPercent = 50.0 + GlobalStatus.chargePercent;
+        Double lossPercent = -3.7 + GlobalStatus.chargePercent;
         Double rate = accountInfoDto.getRate().doubleValue();
 
         return buySellVolumeNeedToSell || (profitPercent <= rate || lossPercent >= rate);
