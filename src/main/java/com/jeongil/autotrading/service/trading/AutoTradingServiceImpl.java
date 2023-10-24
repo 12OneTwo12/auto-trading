@@ -3,14 +3,11 @@ package com.jeongil.autotrading.service.trading;
 import com.jeongil.autotrading.common.properties.BinanceProperties;
 import com.jeongil.autotrading.dto.AccountInfoDto;
 import com.jeongil.autotrading.dto.BuySellVolume;
-import com.jeongil.autotrading.dto.LongOrShot;
+import com.jeongil.autotrading.dto.LongOrShotAndBuyOrNot;
 import com.jeongil.autotrading.service.binance.BinanceService;
 import com.jeongil.autotrading.utils.GlobalStatus;
 import com.jeongil.autotrading.utils.SenderUtils;
-import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -37,9 +34,10 @@ public class AutoTradingServiceImpl implements AutoTradingService {
         if (accountInfoDto.isHasPosition()){
             if (isNeedToSell(accountInfoDto)) binanceService.sellIt(accountInfoDto);
         } else {
-            LongOrShot longOrShot = longOrShotAndTheseINeedToBuy();
+            LongOrShotAndBuyOrNot longOrShotAndBuyOrNot = longOrShotAndTheseINeedToBuy();
 
-            if (longOrShot.isNeedToBuy() && accountInfoDto.getAvailableBalance().compareTo(BigDecimal.ZERO) > 0) binanceService.buyIt(longOrShot, accountInfoDto);
+            if (longOrShotAndBuyOrNot.isNeedToBuy() && accountInfoDto.getAvailableBalance().compareTo(BigDecimal.ZERO) > 0)
+                binanceService.buyIt(longOrShotAndBuyOrNot, accountInfoDto);
         }
     }
 
@@ -77,7 +75,7 @@ public class AutoTradingServiceImpl implements AutoTradingService {
         return buySellVolumeNeedToSell || (profitPercent <= rate || lossPercent >= rate);
     }
 
-    private LongOrShot longOrShotAndTheseINeedToBuy() {
+    private LongOrShotAndBuyOrNot longOrShotAndTheseINeedToBuy() {
         List<BuySellVolume> buySellVolumes = binanceService.getBuySellVolume("1");
         int volumeListSize = buySellVolumes.size();
 
@@ -104,6 +102,6 @@ public class AutoTradingServiceImpl implements AutoTradingService {
 
         boolean isNeedToBuy = standardVolume >= compareVolume * 6;
 
-        return new LongOrShot(isLong, isNeedToBuy);
+        return new LongOrShotAndBuyOrNot(isLong, isNeedToBuy);
     }
 }

@@ -5,11 +5,9 @@ import com.jeongil.autotrading.common.exception.RequestOrderException;
 import com.jeongil.autotrading.common.properties.BinanceProperties;
 import com.jeongil.autotrading.dto.*;
 import com.jeongil.autotrading.utils.SenderUtils;
-import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
@@ -33,13 +31,7 @@ public class BinanceServiceImpl implements BinanceService{
     public AccountInfoDto getMyAccountPosition() {
         String timeStamp = Long.toString(System.currentTimeMillis());
 
-        String queryString = "timestamp=" + timeStamp;
-
-        String signature = getSignature(queryString);
-
-        queryString += "&signature=" + signature;
-
-        String url = binanceProperties.getDefaultUrl() + binanceProperties.getGetAccountInfoUrl() + "?" + queryString;
+        String url = getMyAccountInformationRequestUri(timeStamp);
 
         AccountDetailInfoDto accountDetailInfoDto = senderUtils.sendGet(HttpMethod.GET, url, new AccountDetailInfoDto());
 
@@ -80,6 +72,16 @@ public class BinanceServiceImpl implements BinanceService{
         return new AccountInfoDto(hasPosition, percentageDifference, availableBalance, myPositionPrice, myPositionQuantity, unrealizedProfit, isLong);
     }
 
+    private String getMyAccountInformationRequestUri(String timeStamp) {
+        String queryString = "timestamp=" + timeStamp;
+
+        String signature = getSignature(queryString);
+
+        queryString += "&signature=" + signature;
+
+        return binanceProperties.getDefaultUrl() + binanceProperties.getGetAccountInfoUrl() + "?" + queryString;
+    }
+
     @Override
     public void sellIt(AccountInfoDto accountInfoDto) {
         String side = accountInfoDto.getIsLong() ? "SELL" : "BUY";
@@ -95,6 +97,30 @@ public class BinanceServiceImpl implements BinanceService{
 
         if (quantity.length() > 5) quantity = quantity.substring(0, 5);
 
+        String uri = getEndPositionRequestUri(side, type, timeStamp, positionSide, quantity);
+
+        OrderResponseDto responseDto = senderUtils.sendGet(HttpMethod.POST, uri, new OrderResponseDto());
+
+        if (!"NEW".equals(responseDto.getStatus())) {
+            senderUtils.sendSlack(senderUtils.getErrorMessage("RequestOrderException", "Order Response가 비정상적입니다."));
+            throw RequestOrderException.ofError("Order Response가 비정상적입니다.");
+        }
+
+        sendEndPositionSlack(accountInfoDto);
+    }
+
+    private void sendEndPositionSlack(AccountInfoDto accountInfoDto) {
+        TradeHistory tradeHistory = getLastTradeHistory();
+
+        String winOrLose = accountInfoDto.getRate().compareTo(BigDecimal.ZERO) > 0 ? "익절" : "손절";
+        String rate = accountInfoDto.getRate().compareTo(BigDecimal.ZERO) > 0 ? accountInfoDto.getRate().toString().substring(0, 4) : accountInfoDto.getRate().toString().substring(0, 5);
+
+        String message = "*" + winOrLose + "*" + " - [ 포지션 종료 - " + " 수익률 : `" + rate + "%`" + " 손익 금액 : " + accountInfoDto.getUnrealizedProfit() + " position side : " + tradeHistory.getPositionSide() + " ]";
+
+        senderUtils.sendSlack(message);
+    }
+
+    private String getEndPositionRequestUri(String side, String type, String timeStamp, String positionSide, String quantity) {
         String queryString = "side=" + side;
         queryString += "&type=" + type;
         queryString += "&positionSide=" + positionSide;
@@ -106,46 +132,21 @@ public class BinanceServiceImpl implements BinanceService{
         queryString += "&signature=" + sig;
 
         String uri = binanceProperties.getDefaultUrl() + binanceProperties.getOrderUrl() + "?" + queryString;
-
-        OrderResponseDto responseDto = senderUtils.sendGet(HttpMethod.POST, uri, new OrderResponseDto());
-
-        if (!"NEW".equals(responseDto.getStatus())) {
-            senderUtils.sendSlack(senderUtils.getErrorMessage("RequestOrderException", "Order Response가 비정상적입니다."));
-            throw RequestOrderException.ofError("Order Response가 비정상적입니다.");
-        }
-
-        TradeHistory tradeHistory = getLastTradeHistory();
-
-        String winOrLose = accountInfoDto.getRate().compareTo(BigDecimal.ZERO) > 0 ? "익절" : "손절";
-        String rate = accountInfoDto.getRate().compareTo(BigDecimal.ZERO) > 0 ? accountInfoDto.getRate().toString().substring(0, 4) : accountInfoDto.getRate().toString().substring(0, 5);
-        
-        String message = "*" + winOrLose + "*" + " - [ 포지션 종료 - " + " 수익률 : `" + rate + "%`" + " 손익 금액 : " + accountInfoDto.getUnrealizedProfit() + " position side : " + tradeHistory.getPositionSide() + " ]";
-
-        senderUtils.sendSlack(message);
+        return uri;
     }
 
     @Override
-    public void buyIt(LongOrShot longOrShot, AccountInfoDto accountInfoDto) {
-        String side = longOrShot.isLong() ? "BUY" : "SELL";
+    public void buyIt(LongOrShotAndBuyOrNot longOrShotAndBuyOrNot, AccountInfoDto accountInfoDto) {
+        String side = longOrShotAndBuyOrNot.isLong() ? "BUY" : "SELL";
         String type = "MARKET";
-        String positionSide = longOrShot.isLong() ? "LONG" : "SHORT";
+        String positionSide = longOrShotAndBuyOrNot.isLong() ? "LONG" : "SHORT";
         String timeStamp = Long.toString(System.currentTimeMillis());
         Integer setLeverage = 125;
         String quantity = accountInfoDto.getAvailableBalance().multiply(BigDecimal.valueOf(setLeverage-1)).toString();
 
         if (quantity.length() > 5) quantity = quantity.substring(0, 5);
 
-        String queryString = "side=" + side;
-        queryString += "&symbol=" + binanceProperties.getSymbol();
-        queryString += "&quantity=" + quantity;
-        queryString += "&type=" + type;
-        queryString += "&positionSide=" + positionSide;
-        queryString += "&timestamp=" + timeStamp;
-
-        String sig = getSignature(queryString);
-        queryString += "&signature=" + sig;
-
-        String uri = binanceProperties.getDefaultUrl() + binanceProperties.getOrderUrl() + "?" + queryString;
+        String uri = getStartPositionRequestUri(side, type, positionSide, timeStamp, quantity);
 
         OrderResponseDto responseDto = senderUtils.sendGet(HttpMethod.POST, uri, new OrderResponseDto());
 
@@ -154,17 +155,14 @@ public class BinanceServiceImpl implements BinanceService{
             throw RequestOrderException.ofError("Order Response가 비정상적입니다.");
         }
 
-        String leverageQueryString = "symbol=" + binanceProperties.getSymbol();
-        leverageQueryString += "&leverage=" + setLeverage;
-        leverageQueryString += "&timestamp=" + timeStamp;
-
-        String leverSig = getSignature(leverageQueryString);
-        leverageQueryString += "&signature=" + leverSig;
-
-        String setLeverageUrl = binanceProperties.getDefaultUrl() + binanceProperties.getLeverageUrl() + "?" + leverageQueryString;
+        String setLeverageUrl = getSetLeverageUri(timeStamp, setLeverage);
 
         LeverageResponseDto leverageResponseDto = senderUtils.sendGet(HttpMethod.POST, setLeverageUrl, new LeverageResponseDto());
 
+        sendStartPositionSlack(positionSide, setLeverage, quantity, leverageResponseDto);
+    }
+
+    private void sendStartPositionSlack(String positionSide, Integer setLeverage, String quantity, LeverageResponseDto leverageResponseDto) {
         String message = "[ 구매 완료 - " + "position side : " + positionSide + " 포지션 수량 : " + quantity + " ]";
 
         senderUtils.sendSlack(message);
@@ -173,6 +171,34 @@ public class BinanceServiceImpl implements BinanceService{
             senderUtils.sendSlack(senderUtils.getErrorMessage("RequestOrderException", "Set Leverage Response가 비정상적입니다."));
             throw RequestOrderException.ofError("Set Leverage Response가 비정상적입니다.");
         }
+    }
+
+    private String getSetLeverageUri(String timeStamp, Integer setLeverage) {
+        String leverageQueryString = "symbol=" + binanceProperties.getSymbol();
+        leverageQueryString += "&leverage=" + setLeverage;
+        leverageQueryString += "&timestamp=" + timeStamp;
+
+        String leverSig = getSignature(leverageQueryString);
+        leverageQueryString += "&signature=" + leverSig;
+
+        String setLeverageUrl = binanceProperties.getDefaultUrl() + binanceProperties.getLeverageUrl() + "?" + leverageQueryString;
+        return setLeverageUrl;
+    }
+
+    @NotNull
+    private String getStartPositionRequestUri(String side, String type, String positionSide, String timeStamp, String quantity) {
+        String queryString = "side=" + side;
+        queryString += "&symbol=" + binanceProperties.getSymbol();
+        queryString += "&quantity=" + quantity;
+        queryString += "&type=" + type;
+        queryString += "&positionSide=" + positionSide;
+        queryString += "&timestamp=" + timeStamp;
+
+        String sig = getSignature(queryString);
+        queryString += "&signature=" + sig;
+
+        String uri = binanceProperties.getDefaultUrl() + binanceProperties.getOrderUrl() + "?" + queryString;
+        return uri;
     }
 
     @Override

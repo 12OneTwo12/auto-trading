@@ -9,7 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LongOrShot {
+public class LongOrShotAndBuyOrNot {
 
     private boolean isLong;
     private boolean needToBuy;
